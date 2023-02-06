@@ -1,0 +1,27 @@
+﻿env: dev
+targetApp: betsystem-dotnet
+namespace: dev
+owner: Nikita Prachkovski
+
+mongo:
+  labels:
+    app: mongo
+
+  volumeCapacity: 8Gi
+  hostPath: /betsystem_dotnet/dev/data/mongo-volume
+
+  containerPort: 27017
+  servicePort: 27017
+
+  deployment:
+    image: mongo:4.2.21
+    resources:
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+      limits:
+        memory: "1024Mi"
+        cpu: "1"
+
+  service:
+    type: ClusterIP

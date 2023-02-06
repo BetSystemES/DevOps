@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-deploy
+  labels:
+    app: {{ .Values.mongo.labels.app }}
+    env: {{ .Values.env }}
+    targetApp: {{ .Values.targetApp }}
+    namespace: {{ .Values.namespace }}
+    owner: {{ .Values.owner }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-container
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-container
+        env: {{ .Values.env }}
+        targetApp: {{ .Values.targetApp }}
+        namespace: {{ .Values.namespace }}
+        owner: {{ .Values.owner }}
+    spec:
+      containers:
+        - name: {{ .Release.Name }}-container
+          image: {{.Values.mongo.deployment.image }}
+          resources:
+            requests:
+              memory: {{ .Values.mongo.deployment.resources.requests.memory }}
+              cpu: {{ .Values.mongo.deployment.resources.requests.cpu }}
+            limits:
+              memory: {{ .Values.mongo.deployment.resources.limits.memory }}
+              cpu: {{ .Values.mongo.deployment.resources.limits.cpu }}
+          ports:
+            - containerPort: {{ .Values.mongo.containerPort }}
+          readinessProbe:
+            exec:
+              command:
+              - mongo
+              - --eval
+              - "db.adminCommand('ping')"
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          volumeMounts:
+            - mountPath: /var/lib/mongo/data
+              name: {{ .Release.Name }}-volume-mount
+      volumes:
+        - name: {{ .Release.Name }}-volume-mount
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-pvc

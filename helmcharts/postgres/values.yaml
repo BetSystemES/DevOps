@@ -1,0 +1,27 @@
+env: dev
+targetApp: betsystem-dotnet
+namespace: dev
+owner: NikitaPrachkovski
+
+postgres:
+  labels:
+    app: postgres
+
+  volumeCapacity: 8Gi
+  hostPath: /betsystem_dotnet/dev/data/postgres-volume
+
+  containerPort: 5432
+  servicePort: 5432
+
+  deployment:
+    image: postgres:14.1
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "250m"
+      limits:
+        memory: "2048Mi"
+        cpu: "2"
+
+  service:
+    type: ClusterIP

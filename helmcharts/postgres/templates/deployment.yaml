@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-deploy
+  labels:
+    app: {{ .Values.postgres.labels.app }}
+    env: {{ .Values.env }}
+    targetApp: {{ .Values.targetApp }}
+    namespace: {{ .Values.namespace }}
+    owner: {{ .Values.owner }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-container
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-container
+        env: {{ .Values.env }}
+        targetApp: {{ .Values.targetApp }}
+        namespace: {{ .Values.namespace }}
+        owner: {{ .Values.owner }}
+    spec:
+      containers:
+        - name: {{ .Release.Name }}-container
+          image: {{ .Values.postgres.deployment.image }}
+          env:
+            - name: POSTGRES_USER
+              value: "postgres"
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: "postgresDatabase"
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secrets
+                  key: "postgresPassword"
+          resources:
+            requests:
+              memory:
+                {{ .Values.postgres.deployment.resources.requests.memory }}
+              cpu: {{ .Values.postgres.deployment.resources.requests.cpu }}
+            limits:
+              memory:
+                {{ .Values.postgres.deployment.resources.limits.memory }}
+              cpu: {{ .Values.postgres.deployment.resources.limits.cpu }}
+          ports:
+            - containerPort: {{ .Values.postgres.containerPort }}
+          readinessProbe:
+            exec:
+              command:
+              - pg_isready
+              - -U postgres
+              - -d postgres
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: {{ .Release.Name }}-volume-mount
+      volumes:
+        - name: {{ .Release.Name }}-volume-mount
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-pvc
